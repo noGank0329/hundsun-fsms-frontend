@@ -12,18 +12,51 @@ export default initRouter(
           name: 'index',
           path: '',
           component: Index,
-          children: [
-            {
-              name: 'index-home',
-              path: 'home',
-              component: IndexHome,
-            },
-          ],
         },
         {
-          name: 'Login',
-          path: 'Login',
-          component: Login,
+          name: 'AccountSettlement',
+          path: 'AccountSettlement',
+          component: AccountSettlement,
+        },
+        {
+          name: 'BankCardManagement',
+          path: 'BankCardManagement',
+          component: BankCardManagement,
+        },
+        {
+          name: 'BusinessQuery',
+          path: 'BusinessQuery',
+          component: BusinessQuery,
+        },
+        {
+          name: 'CreateAccount',
+          path: 'CreateAccount',
+          component: CreateAccount,
+        },
+        {
+          name: 'Home',
+          path: 'Home',
+          component: Home,
+        },
+        {
+          name: 'ProductManagement',
+          path: 'ProductManagement',
+          component: ProductManagement,
+        },
+        {
+          name: 'Purchase',
+          path: 'Purchase',
+          component: Purchase,
+        },
+        {
+          name: 'Redemption',
+          path: 'Redemption',
+          component: Redemption,
+        },
+        {
+          name: 'TeamIntroduction',
+          path: 'TeamIntroduction',
+          component: TeamIntroduction,
         },
         {
           name: '__404__',
@@ -39,11 +72,44 @@ export default initRouter(
 function Index() {
   return import(/* webpackChunkName: "index" */ '@/views/index.vue')
 }
-function IndexHome() {
-  return import(/* webpackChunkName: "index-home" */ '@/views/index/home.vue')
+function AccountSettlement() {
+  return import(
+    /* webpackChunkName: "AccountSettlement" */ '@/views/AccountSettlement.vue'
+  )
 }
-function Login() {
-  return import(/* webpackChunkName: "Login" */ '@/views/Login.vue')
+function BankCardManagement() {
+  return import(
+    /* webpackChunkName: "BankCardManagement" */ '@/views/BankCardManagement.vue'
+  )
+}
+function BusinessQuery() {
+  return import(
+    /* webpackChunkName: "BusinessQuery" */ '@/views/BusinessQuery.vue'
+  )
+}
+function CreateAccount() {
+  return import(
+    /* webpackChunkName: "CreateAccount" */ '@/views/CreateAccount.vue'
+  )
+}
+function Home() {
+  return import(/* webpackChunkName: "Home" */ '@/views/Home.vue')
+}
+function ProductManagement() {
+  return import(
+    /* webpackChunkName: "ProductManagement" */ '@/views/ProductManagement.vue'
+  )
+}
+function Purchase() {
+  return import(/* webpackChunkName: "Purchase" */ '@/views/Purchase.vue')
+}
+function Redemption() {
+  return import(/* webpackChunkName: "Redemption" */ '@/views/Redemption.vue')
+}
+function TeamIntroduction() {
+  return import(
+    /* webpackChunkName: "TeamIntroduction" */ '@/views/TeamIntroduction.vue'
+  )
 }
 function __404__() {
   return import(/* webpackChunkName: "__404__" */ '@/views/__404__.vue')
