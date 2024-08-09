@@ -29,6 +29,16 @@ export default initRouter(
           component: BusinessQuery,
         },
         {
+          name: 'CancelOrder',
+          path: 'CancelOrder',
+          component: CancelOrder,
+        },
+        {
+          name: 'Consult',
+          path: 'Consult',
+          component: Consult,
+        },
+        {
           name: 'CreateAccount',
           path: 'CreateAccount',
           component: CreateAccount,
@@ -59,6 +69,11 @@ export default initRouter(
           component: TeamIntroduction,
         },
         {
+          name: 'TransactionQuery',
+          path: 'TransactionQuery',
+          component: TransactionQuery,
+        },
+        {
           name: '__404__',
           path: '*',
           component: __404__,
@@ -87,6 +102,12 @@ function BusinessQuery() {
     /* webpackChunkName: "BusinessQuery" */ '@/views/BusinessQuery.vue'
   )
 }
+function CancelOrder() {
+  return import(/* webpackChunkName: "CancelOrder" */ '@/views/CancelOrder.vue')
+}
+function Consult() {
+  return import(/* webpackChunkName: "Consult" */ '@/views/Consult.vue')
+}
 function CreateAccount() {
   return import(
     /* webpackChunkName: "CreateAccount" */ '@/views/CreateAccount.vue'
@@ -109,6 +130,11 @@ function Redemption() {
 function TeamIntroduction() {
   return import(
     /* webpackChunkName: "TeamIntroduction" */ '@/views/TeamIntroduction.vue'
+  )
+}
+function TransactionQuery() {
+  return import(
+    /* webpackChunkName: "TransactionQuery" */ '@/views/TransactionQuery.vue'
   )
 }
 function __404__() {

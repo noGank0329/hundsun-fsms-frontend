@@ -85,6 +85,11 @@
                     <p slot="title">日历</p>
                     <Calender />
                 </h-card>
+                <h-card :bordered="true" style="margin-top:10px;border-radius: 10px;margin-left:10px" dis-hover>
+                    <router-link to="/Consult">
+                        <h-icon name="help"></h-icon><span>系统机器人</span>
+                    </router-link>
+                </h-card>
             </h-col>
         </h-row>
     </div>

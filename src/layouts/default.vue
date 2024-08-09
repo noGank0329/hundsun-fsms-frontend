@@ -42,10 +42,14 @@
               <h-icon name="card"></h-icon>
               <span>银行卡管理</span>
             </h-menu-item>
-            <h-menu-item name="1-7">
-              <h-icon name="search"></h-icon>
-              <span>业务查询</span>
-            </h-menu-item>
+            <h-submenu name="1-7">
+              <template slot="title">
+                <h-icon name="search"></h-icon>
+                <span>业务查询</span>
+              </template>
+              <h-menu-item name="1-7-1"> <h-icon name="searchfill"></h-icon>交易查询</h-menu-item>
+              <h-menu-item name="1-7-2"> <h-icon name="android-cancel"></h-icon>撤单</h-menu-item>
+            </h-submenu>
             <h-menu-item name="1-8">
               <h-icon name="android-people"></h-icon>
               <span>团队介绍</span>
@@ -88,8 +92,10 @@ export default {
         this.$router.push({ name: 'AccountSettlement' });
       } else if (name === '1-6') {
         this.$router.push({ name: 'BankCardManagement' });
-      } else if (name === '1-7') {
-        this.$router.push({ name: 'BusinessQuery' });
+      } else if (name === '1-7-1') {
+        this.$router.push({ name: 'TransactionQuery' });
+      } else if (name === '1-7-2') {
+        this.$router.push({ name: 'CancelOrder' });
       } else if (name === '1-8') {
         this.$router.push({ name: 'TeamIntroduction' });
       }
