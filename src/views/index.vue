@@ -61,6 +61,7 @@ export default {
           this.$request.post('/user/login', this.form).then(res => {
             console.log(res)
             if (res.data.code === 200) {
+              localStorage.setItem('userName', this.form.userName);
               this.$router.push({ name: "Home" })
               this.$hMessage.success('登录成功')
             } else {
