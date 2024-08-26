@@ -15,18 +15,18 @@
                 </h-form-item>
                 <h-form-item label="风险等级">
                     <h-select v-model="searchParams.fund_risk_level">
-                        <h-option label="低风险" value="1"></h-option>
-                        <h-option label="中低风险" value="2"></h-option>
-                        <h-option label="中风险" value="3"></h-option>
-                        <h-option label="中高风险" value="4"></h-option>
-                        <h-option label="高风险" value="5"></h-option>
+                        <h-option label="低风险" value="0"></h-option>
+                        <h-option label="中低风险" value="1"></h-option>
+                        <h-option label="中风险" value="2"></h-option>
+                        <h-option label="中高风险" value="3"></h-option>
+                        <h-option label="高风险" value="4"></h-option>
                     </h-select>
                 </h-form-item>
                 <h-form-item label="产品状态">
                     <h-select v-model="searchParams.fund_state">
-                        <h-option label="正常" value="1"></h-option>
-                        <h-option label="暂停" value="2"></h-option>
-                        <h-option label="已关闭" value="3"></h-option>
+                        <h-option label="正常" value="0"></h-option>
+                        <h-option label="暂停" value="1"></h-option>
+                        <h-option label="已关闭" value="2"></h-option>
                     </h-select>
                 </h-form-item>
                 <h-form-item style="margin-top:33px">
@@ -64,11 +64,11 @@ export default {
                     key: "fund_risk_level",
                     render: (h, params) => {
                         const riskLevelMap = {
-                            1: "低风险",
-                            2: "中低风险",
-                            3: "中风险",
-                            4: "中高风险",
-                            5: "高风险",
+                            0: "低风险",
+                            1: "中低风险",
+                            2: "中风险",
+                            3: "中高风险",
+                            4: "高风险",
                         };
                         return h("span", riskLevelMap[params.row.fund_risk_level]);
                     },
@@ -78,9 +78,9 @@ export default {
                     key: "fund_state",
                     render: (h, params) => {
                         const stateMap = {
-                            1: "正常",
-                            2: "暂停",
-                            3: "已关闭",
+                            0: "正常",
+                            1: "暂停",
+                            2: "已关闭",
                         };
                         return h("span", stateMap[params.row.fund_state]);
                     },
@@ -130,6 +130,7 @@ export default {
                 },
             ],
             products: [],
+            filteredProducts: [],
             pageSize: 9,
             currentPage: 1,
         };
@@ -138,42 +139,50 @@ export default {
         this.loadProducts();
     },
     methods: {
-        loadProducts() {
-            this.products = [
-                {
-                    fund_id: "001",
-                    fund_name: "稳健成长基金",
-                    fund_type: "股票型",
-                    fund_risk_level: 3,  
-                    fund_state: 1,  
-                },
-                {
-                    fund_id: "002",
-                    fund_name: "保守收益基金",
-                    fund_type: "债券型",
-                    fund_risk_level: 1,  
-                    fund_state: 1,  
-                },
-                {
-                    fund_id: "003",
-                    fund_name: "高增长基金",
-                    fund_type: "混合型",
-                    fund_risk_level: 5, 
-                    fund_state: 2,  
-                },
-                {
-                    fund_id: "004",
-                    fund_name: "稳定收益基金",
-                    fund_type: "货币型",
-                    fund_risk_level: 2, 
-                    fund_state: 1,  
-                },
-            ];
+        async loadProducts() {
+            try {
+                const res = await this.$request.get('/fund/fundinfo', {
+                    params: {
+                        current: this.currentPage,
+                        size: 10000,
+                        fund_id: this.searchParams.fund_id,
+                        fund_name: this.searchParams.fund_name,
+                        fund_type: this.searchParams.fund_type,
+                        fund_risk_level: this.searchParams.fund_risk_level,
+                        fund_state: this.searchParams.fund_state,
+                    }
+                });
+                if (res.data.code === 200) {
+                    console.log(res)
+                    this.products = res.data.data.records.map(item => ({
+                        fund_id: item.fundId,
+                        fund_name: item.fundName,
+                        fund_type: item.fundType,
+                        fund_risk_level: item.fundRiskLevel,
+                        fund_state: item.fundState,
+                    }));
+                    this.filteredProducts = this.products;
+                } else {
+                    this.$hMessage.error(res.data.message || '加载产品数据失败');
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                this.$hMessage.error('加载产品数据时发生错误');
+            }
         },
         onSearch() {
-            // 实现查询逻辑
-            console.log("查询参数:", this.searchParams);
+            this.filteredProducts = this.products.filter(product => {
+                return (
+                    (!this.searchParams.fund_id || String(product.fund_id).includes(this.searchParams.fund_id)) &&
+                    (!this.searchParams.fund_name || product.fund_name.includes(this.searchParams.fund_name)) &&
+                    (!this.searchParams.fund_type || product.fund_type.includes(this.searchParams.fund_type)) &&
+                    (!this.searchParams.fund_risk_level || String(product.fund_risk_level).includes(this.searchParams.fund_risk_level)) &&
+                    (!this.searchParams.fund_state || String(product.fund_state).includes(this.searchParams.fund_state))
+                );
+            });
+            this.currentPage = 1; // 查询后从第一页开始显示
         },
+
         onReset() {
             this.searchParams = {
                 fund_id: '',
@@ -182,6 +191,7 @@ export default {
                 fund_risk_level: '',
                 fund_state: '',
             };
+            this.filteredProducts = this.products; // 重置时显示所有数据
         },
         viewDetails(product) {
             // 实现查看详细信息逻辑
@@ -210,6 +220,9 @@ export default {
             this.currentPage = page;
         },
     },
+    mounted() {
+        this.filteredProducts = this.products; 
+    },
     computed: {
         total() {
             return this.products.length;
@@ -217,7 +230,7 @@ export default {
         currentData() {
             const start = (this.currentPage - 1) * this.pageSize;
             const end = this.currentPage * this.pageSize;
-            return this.products.slice(start, end);
+            return this.filteredProducts.slice(start, end);
         },
     }
 };
