@@ -18,8 +18,8 @@
           <h-col :span="12">
             <h-form-item label="用户类型">
               <h-select v-model="customer.customer_type" :disabled="!isEditing">
-                <h-option label="个人" value="individual"></h-option>
-                <h-option label="机构" value="organization"></h-option>
+                <h-option label="个人" value= '0'></h-option>
+                <h-option label="机构" value= '1'></h-option>
               </h-select>
             </h-form-item>
           </h-col>
@@ -38,9 +38,9 @@
           <h-col :span="12">
             <h-form-item label="身份证类型">
               <h-select v-model="customer.customer_idtype" :disabled="!isEditing">
-                <h-option label="身份证" value="ID_CARD"></h-option>
-                <h-option label="护照" value="PASSPORT"></h-option>
-                <h-option label="港澳台居民居住证/通行证" value="HK_MO_TW_PERMIT"></h-option>
+                <h-option label="身份证" value= '0'></h-option>
+                <h-option label="护照" value= '1'></h-option>
+                <h-option label="港澳台居民居住证/通行证" value= '2'></h-option>
               </h-select>
             </h-form-item>
           </h-col>
@@ -181,54 +181,40 @@ export default {
     handlePageChange(page) {
       this.currentPage = page;
     },
-    loadCustomerDetails() {
-      const customerId = this.$route.query.customer_id;
-      // 模拟加载用户详细信息
-      const customerData = {
-        customer_id: customerId,
-        customer_name: '张三',
-        customer_type: 'individual',
-        customer_idcard: '123456789012345678',
-        customer_idtype: 'ID_CARD',
-        customer_phone: '13800000001',
-      };
-      this.customer = customerData;
+    async loadCustomerDetails() {
+        try {
+            const customerId = this.$route.query.customer_id;
 
-      // 模拟加载账户信息
-      const accountsData = [
-        {
-          account_id: "A001",
-          status: "Active",
-          create_date: "2022-01-15",
-          account_risk_level: "稳健型",
-        },
-        {
-          account_id: "A002",
-          status: "Inactive",
-          create_date: "2021-11-10",
-          account_risk_level: "进取型",
-        },
-        {
-          account_id: "A001",
-          status: "Active",
-          create_date: "2022-01-15",
-          account_risk_level: "稳健型",
-        },
-        {
-          account_id: "A002",
-          status: "Inactive",
-          create_date: "2021-11-10",
-          account_risk_level: "进取型",
-        },
-        {
-          account_id: "A001",
-          status: "Active",
-          create_date: "2022-01-15",
-          account_risk_level: "稳健型",
-        },
-      ];
-      this.customerAccounts = accountsData;
+            // 使用 this.$request.get 发送请求
+            const res = await this.$request.get('/customer/customerfullinfo', {
+                params: {
+                    id: customerId
+                }
+            });
+
+            // 检查返回的状态码
+            if (res.data.code === 200) {
+                // 将返回的数据映射到 customer 对象中
+                console.log(this.customer);
+                this.customer = {
+                    customer_id: res.data.data.customerId,
+                    customer_name: res.data.data.customerName,
+                    customer_type: String(res.data.data.customerType),
+                    customer_idcard: res.data.data.customerIdcard,
+                    customer_idtype: String(res.data.data.customerIdcardType),
+                    customer_phone: res.data.data.customerPhone,
+                };
+            } else {
+                // 如果请求失败，显示错误信息
+                this.$hMessage.error(res.data.message || '加载用户详细信息失败');
+            }
+        } catch (error) {
+            // 捕获并处理请求错误
+            console.error('Error loading customer details:', error);
+            this.$hMessage.error('加载用户详细信息时发生错误');
+        }
     },
+
     enableEditing() {
       this.isEditing = true;
     },
@@ -332,3 +318,4 @@ h3 {
   margin-top: 20px;
 }
 </style>
+
