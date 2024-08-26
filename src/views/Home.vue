@@ -15,7 +15,7 @@
             <h-col :span=18>
                 <h-card class="welcome-card" :bordered="true" dis-hover>
                     <p slot="title">欢迎回到理财销售交易系统，现在是北京时间{{ currentTime }}</p>
-                    <span>当前登入员工为：员工A</span>
+                    <span>当前登入员工为：{{ currentUser }}</span>
                 </h-card>
                 <h-col :span=7>
                     <h-card :bordered="true" style="border-radius: 10px" dis-hover>
@@ -142,11 +142,14 @@ export default {
                 arrow: "hover",
             },
             currentTime: new Date().toLocaleString(),
+            currentUser:'',
         };
     },
     mounted() {
         this.updateTime();
         setInterval(this.updateTime, 1000);
+        this.currentUser = localStorage.getItem('userName'); 
+        console.log('当前登录的用户名:', this.currentUser);
     },
     methods: {
         updateTime() {

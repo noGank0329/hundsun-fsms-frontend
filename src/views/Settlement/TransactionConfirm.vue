@@ -55,15 +55,22 @@ export default {
             purchaseOrders: [],
             redemptionOrders: [],
             columns: [
-                { title: "交易ID", key: "transaction_id" },
-                { title: "账户ID", key: "account_id" },
-                { title: "基金ID", key: "fund_id" },
-                { title: "交易类型", key: "transaction_type" },
-                { title: "交易金额", key: "transaction_amount" },
-                { title: "交易份额", key: "transaction_share" },
-                { title: "交易日期", key: "transaction_date" },
-                { title: "客户ID", key: "customer_id" },
-                { title: "交易状态", key: "transaction_state" },
+                { title: "交易ID", key: "transactionId" },
+                { title: "账户ID", key: "accountId" },
+                { title: "基金ID", key: "fundId" },
+                { title: "交易金额", key: "transactionAmount" },
+                { title: "交易份额", key: "transactionShare" },
+                { title: "交易日期", key: "transactionDate" },
+                { title: "客户ID", key: "customerId" },
+                {
+                    title: "订单状态",
+                    key: "transactionState",
+                    render: (h, params) => {
+                        const state = params.row.transactionState;
+                        const displayText = state === 0 ? '未完成' : '已撤单';
+                        return h('span', displayText);
+                    }
+                },
             ],
         };
     },
@@ -85,19 +92,27 @@ export default {
         confirmPurchaseTransactions() {
             this.loading = true;
             setTimeout(() => {
-                this.purchaseOrders.forEach(order => {
-                    order.transaction_state = "已确认";
-                });
+                this.updateTransactionState(this.purchaseOrders)
                 this.purchaseConfirmed = true;
                 this.loading = false;
             }, 2000);
         },
+        async updateTransactionState(purchaseOrders) {
+            try {
+                const ids = purchaseOrders.map(order => order.transactionId);
+                console.log(ids)
+                const response = await this.$request.post('/settlement/updateTransactionStateById', ids);
+                console.log('更新成功:', response.data);
+                this.loadTransactionData()
+            } catch (error) {
+                console.error('更新失败:', error);
+            }
+        },
+
         confirmRedemptionTransactions() {
             this.loading = true;
             setTimeout(() => {
-                this.redemptionOrders.forEach(order => {
-                    order.transaction_state = "已确认";
-                });
+                this.updateTransactionState(this.redemptionOrders)
                 this.redemptionConfirmed = true;
                 this.loading = false;
             }, 2000);
@@ -109,358 +124,50 @@ export default {
             this.currentPage2 = page2;
         },
         loadTransactionData() {
-            // 模拟加载数据
-            this.purchaseOrders = [
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000096",
-                    account_id: "930000000096",
-                    fund_id: "093000",
-                    transaction_type: "buy",
-                    transaction_amount: "10000.00",
-                    transaction_share: "0.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000291",
-                    transaction_state: "未确认"
-                },
-                // 更多模拟数据...
-            ];
-
-            this.redemptionOrders = [
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                {
-                    transaction_id: "000097",
-                    account_id: "930000000097",
-                    fund_id: "093001",
-                    transaction_type: "sell",
-                    transaction_amount: "0.00",
-                    transaction_share: "500.00",
-                    transaction_date: "2021-11-25",
-                    customer_id: "20211117000292",
-                    transaction_state: "未确认"
-                },
-                // 更多模拟数据...
-            ];
+            // 发起请求获取订单数据
+            const params1 = {
+                current: this.currentPage1,
+                size: 10000,
+                transactionId: '',
+                transactionState: 0,
+                transactionType: 1,
+            };
+            const params2 = {
+                current: this.currentPage2,
+                size: 10000,
+                transactionId: '',
+                transactionState: 0,
+                transactionType: 0,
+            };
+            console.log(params1)
+            this.$request.get('/transaction/query', { params: params1 })
+                .then(res => {
+                    if (res.data.code === 200) {
+                        this.purchaseOrders = res.data.data.records;
+                        console.log('Purchase Orders:', this.purchaseOrders);
+                    } else {
+                        this.$hMessage.error(res.data.message);
+                    }
+                })
+                .catch(err => {
+                    this.$hMessage.error('请求失败：' + err);
+                });
+            this.$request.get('/transaction/query', { params: params2 })
+                .then(res => {
+                    if (res.data.code === 200) {
+                        this.redemptionOrders = res.data.data.records;
+                        console.log('Redemption Orders:', this.redemptionOrders);
+                    } else {
+                        this.$hMessage.error(res.data.message);
+                    }
+                })
+                .catch(err => {
+                    this.$hMessage.error('请求失败：' + err);
+                });
         }
+
     },
-    mounted() {
+    created() {
         this.loadTransactionData();
     },
     computed: {

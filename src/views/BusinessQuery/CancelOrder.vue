@@ -32,7 +32,8 @@
                     </h-select>
                 </h-form-item>
                 <h-form-item label="交易日期">
-                    <h-date-picker v-model="searchParams.transaction_date" type="date" />
+                    <h-date-picker v-model="searchParams.transaction_date" @on-change="handleDateChange" type="date"
+                        format="yyyy-MM-dd" />
                 </h-form-item>
                 <h-form-item style="margin-top:33px">
                     <h-button type="primary" @click="onSearch">查询</h-button>
@@ -165,6 +166,9 @@ export default {
         this.onSearch();
     },
     methods: {
+        handleDateChange(value) {
+            this.searchParams.transaction_date = value;
+        },
         beforetest() {
             return true;
         },
@@ -214,21 +218,12 @@ export default {
                         transactionId: this.selectOrder.transactionId,
                         fundId: this.selectOrder.fundId,
                     }
-                    const mytransactionState = {
-                        code: 2,
-                        name: "已撤单"
-                    }
-                    this.$request.post('/transaction/delete_purchase', {
-                        params: {
-                            withdrawOrderVo: mywithdrawOrderVo,
-                            transactionState: mytransactionState
-                        }
-                    })
+                    this.$request.post('/transaction/delete_purchase', mywithdrawOrderVo)
                         .then(res => {
                             console.log(res)
                             if (res.data.code === 200) {
                                 this.$hMessage.success('撤单成功')
-                                this.onSearch
+                                this.onSearch()
                             } else {
                                 this.$hMessage.error(res.data.message)
                             }

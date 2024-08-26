@@ -38,23 +38,30 @@ export default {
             loading2: false,
             initializationDone: false,
             confirmDone: true,
-            netValues: this.generateNetValues(),
             currentWorkDay: new Date().toISOString().split('T')[0].replace(/-/g, '/'), // 只取年月日，并替换为斜杠格式
-
+            funddata: [],
             columns: [
                 {
                     title: '产品ID',
-                    key: 'productId',
+                    key: 'fundId',
                 },
                 {
-                    title: '前一工作日净值',
-                    key: 'previousNetValue',
+                    title: '产品名称',
+                    key: 'fundName'
                 },
                 {
-                    title: '当日净值',
-                    key: 'newNetValue',
+                    title: '产品类型',
+                    key: 'fundType',
+                },
+                {
+                    title: '产品风险等级',
+                    key: 'fundRiskLevel'
+                },
+                {
+                    title: '当前净值',
+                    key: 'fundNav',
                     render: (h, params) => {
-                        return h('span', {}, params.row.newNetValue || '未初始化');
+                        return h('span', {}, params.row.fundNav || '未初始化');
                     }
                 },
             ],
@@ -63,23 +70,50 @@ export default {
     methods: {
         startInitialization() {
             this.loading1 = true;
-
             setTimeout(() => {
                 // 模拟初始化逻辑
                 this.newWorkDay = this.calculateNewWorkDay(this.currentWorkDay);
                 console.log(this.currentWorkDay)
                 console.log(this.newWorkDay)
-                this.netValues = this.generateNetValues(true);
+                this.generateNetValues(true);
                 this.confirmDone = false;
-
                 this.loading1 = false;
             }, 2000);
+        },
+        checkinit() {
+            this.newWorkDay = this.calculateNewWorkDay(this.currentWorkDay);
+            const formatdate = this.newWorkDay.replace(/\//g, '-');
+            console.log(formatdate)
+            this.$request.get('/dailyfundnav/queryToday', { params: { date: formatdate } })
+                .then(res => {
+                    if (res.data.code === 200) {
+                        console.log(res.data.data)
+                        if (res.data.data.length === 0)
+                            this.dataExists = false
+                        else
+                            this.dataExists = true
+                        console.log(this.dataExists)
+                        if (this.dataExists) {
+                            this.initializationDone = true;
+                            this.confirmDone = true;
+                        } else {
+                            this.initializationDone = false;
+                            this.confirmDone = true;
+                        }
+                    } else {
+                        this.$hMessage.error(res.data.message);
+                    }
+                })
+                .catch(err => {
+                    this.$hMessage.error('请求失败：' + err);
+                });
         },
         confirmInitialization() {
             this.loading2 = true;
             this.initializationDone = true;
 
             setTimeout(() => {
+                this.dailynavupdate();
                 this.confirmDone = true;
                 this.loading2 = false;
             }, 2000);
@@ -103,46 +137,92 @@ export default {
         },
         generateNetValues(initialized = false) {
             // 假设生成新的净值数据
-            let products = [
-                { productId: '001', previousNetValue: 100.00 },
-                { productId: '002', previousNetValue: 105.50 },
-                { productId: '003', previousNetValue: 98.75 },
-                { productId: '004', previousNetValue: 98.75 },
-                { productId: '005', previousNetValue: 98.75 },
-                { productId: '006', previousNetValue: 98.75 },
-                { productId: '007', previousNetValue: 98.75 },
-                { productId: '008', previousNetValue: 98.75 },
-                { productId: '009', previousNetValue: 98.75 },
-                { productId: '010', previousNetValue: 98.75 },
-                { productId: '011', previousNetValue: 98.75 },
-                { productId: '012', previousNetValue: 98.75 },
-                { productId: '013', previousNetValue: 98.75 },
-                { productId: '014', previousNetValue: 98.75 },
-                { productId: '015', previousNetValue: 98.75 },
-            ];
-
+            let products = this.funddata
+            console.log(products)
             return products.map(product => {
-                let newNetValue = initialized ? (product.previousNetValue * (0.9 + Math.random() * 0.2)).toFixed(2) : '';
-                return {
-                    productId: product.productId,
-                    previousNetValue: product.previousNetValue.toFixed(2),
-                    newNetValue,
-                };
+                let newNetValue = initialized ? (0.9 + Math.random() * 0.2).toFixed(2) : '';
+                console.log(newNetValue)
+                console.log(product.fundId)
+                const params = {
+                    fundId: product.fundId,
+                    fundName: product.fundName,
+                    fundType: product.fundType,
+                    fundRiskLevel: product.fundRiskLevel,
+                    fundState: product.fundState,
+                    fundNav: Number(newNetValue)
+                }
+                this.$request.post('/fund/update_fund', params)
+                    .then(res => {
+                        console.log(res)
+                        if (res.data.code === 200) {
+                            this.$hMessage.success('更新成功')
+                            this.onSearch()
+                        } else {
+                            this.$hMessage.error(res.data.message)
+                        }
+                    })
             });
         },
+        dailynavupdate() {
+            let dailyfundnavs = this.funddata.map(product => {
+                const newWorkDay1 = this.newWorkDay.replace(/\//g, '-');
+                return {
+                    fundId: product.fundId,
+                    navDate: newWorkDay1,
+                    fundNav: product.fundNav
+                };
+            });
+            console.log(dailyfundnavs)
+            this.$request.post('/dailyfundnav/updateFundNav', dailyfundnavs)
+                .then(res => {
+                    console.log(res);
+                    if (res.data.code === 200) {
+                        this.$hMessage.success('更新成功');
+                        this.onSearch();
+                    } else {
+                        this.$hMessage.error(res.data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    this.$hMessage.error('更新失败');
+                });
+        },
+
         handlePageChange(page) {
             this.currentPage = page;
+        },
+        onSearch() {
+            const params = {
+                current: this.currentPage,
+                size: 10000,
+            };
+            console.log(params)
+            this.$request.get('/fund/fundinfo', { params })
+                .then(res => {
+                    console.log(res)
+                    if (res.data.code === 200) {
+                        this.$hMessage.success('查询成功')
+                        this.funddata = res.data.data.records
+                    } else {
+                        this.$hMessage.error(res.data.message)
+                    }
+                })
         },
     },
     computed: {
         total() {
-            return this.netValues.length;
+            return this.funddata.length;
         },
         currentData() {
             const start = (this.currentPage - 1) * this.pageSize;
             const end = this.currentPage * this.pageSize;
-            return this.netValues.slice(start, end);
+            return this.funddata.slice(start, end);
         },
+    },
+    created() {
+        this.onSearch()
+        this.checkinit()
     }
 };
 </script>

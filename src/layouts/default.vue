@@ -52,7 +52,6 @@
               <h-menu-item name="1-5-1"> <h-icon name="refresh"></h-icon>日初始化</h-menu-item>
               <h-menu-item name="1-5-2"> <h-icon name="android-done"></h-icon>交易确认</h-menu-item>
               <h-menu-item name="1-5-3"> <h-icon name="printer"></h-icon>数据导出</h-menu-item>
-              <h-menu-item name="1-5-4"> <h-icon name="ios-paper-outline"></h-icon>日志查询</h-menu-item>
             </h-submenu>
             <h-submenu name="1-6">
               <template slot="title">

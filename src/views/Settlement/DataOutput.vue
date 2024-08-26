@@ -14,20 +14,20 @@
 
             <!-- 日期选择和文件格式选择 -->
             <div class="export-options">
-                <h-date-picker v-model="dateRange" @on-change="onDateChange" type="daterange" placeholder="选择日期范围"
+                <h-date-picker v-model="date" @on-change="onDateChange" type="date" placeholder="选择日期"
                     style="width: 300px;"></h-date-picker>
                 <h-select v-model="fileFormat" placeholder="选择文件格式" style="width: 200px; margin-left: 20px;">
                     <h-option value="csv">CSV</h-option>
                     <h-option value="excel">Excel</h-option>
                 </h-select>
-                <h-button :disabled="!dateRangeOutput" type="primary" @click="loadData" style="margin-left: 20px;"
+                <h-button :disabled="!date" type="primary" @click="loadData" style="margin-left: 20px;"
                     :loading="loading">加载数据</h-button>
                 <h-button v-if="filteredData.length" type="primary" @click="exportData"
                     style="margin-left: 20px;">导出数据</h-button>
             </div>
 
             <!-- 数据展示 -->
-            <div v-if="filteredData.length" class="data-table">
+            <div class="data-table">
                 <h-table :columns="columns" :data="currentData"></h-table>
                 <div style="position: fixed;bottom: 5%;">
                     <h-page :total="total" :page-size="pageSize" @on-change="handlePageChange" show-total></h-page>
@@ -42,160 +42,43 @@
 export default {
     data() {
         return {
-            dateselect: 0,
-            dateRange: null,
-            dateRangeOutput: null,
+            date: null, // 修改为单一天
             fileFormat: null,
             loading: false,
             columns: [
                 {
                     title: "交易ID",
-                    key: "transaction_id",
+                    key: "transactionId",
                 },
                 {
-                    title: "客户ID",
-                    key: "customer_id",
+                    title: "账号ID",
+                    key: "accountId",
                 },
                 {
                     title: "基金ID",
-                    key: "fund_id",
+                    key: "fundId",
                 },
                 {
                     title: "交易类型",
-                    key: "transaction_type",
+                    key: "transactionType",
+                    render: (h, params) => {
+                        const type = params.row.transactionType;
+                        const displayText = type === 1 ? '申购' : '赎回';
+                        return h('span', displayText);
+                    }
                 },
                 {
                     title: "交易金额",
-                    key: "transaction_amount",
+                    key: "transactionAmount",
                 },
                 {
                     title: "交易份额",
-                    key: "transaction_share",
+                    key: "transactionShare",
                 },
                 {
                     title: "交易日期",
-                    key: "transaction_date",
+                    key: "transactionDate",
                 },
-            ],
-            data: [
-                {
-                    transaction_id: 'T001',
-                    customer_id: 'C001',
-                    fund_id: 'F001',
-                    transaction_type: '申购',
-                    transaction_amount: 10000,
-                    transaction_share: 100,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                {
-                    transaction_id: 'T002',
-                    customer_id: 'C002',
-                    fund_id: 'F002',
-                    transaction_type: '赎回',
-                    transaction_amount: 5000,
-                    transaction_share: 50,
-                    transaction_date: '2024-08-12',
-                },
-                // 这里添加更多假数据
             ],
             filteredData: [],
             currentPage: 1,
@@ -214,26 +97,42 @@ export default {
     },
     methods: {
         onDateChange(value) {
-            console.log(value)
-            this.dateRangeOutput = value
-            if (value.length) {
-                this.dateselect = 1
-            }
+            console.log(value);
+            this.date = value;
         },
-        loadData() {
-            // 假数据
+        async loadData() {
+            if (!this.date || !this.fileFormat) {
+                this.$hMessage.info("请选择日期和文件格式");
+                return;
+            }
+
             this.loading = true;
-            setTimeout(() => {
-                this.filteredData = this.data
+            try {
+                console.log(this.date)
+                const response = await this.$request.get('/transaction/getTransactionInformation', {
+                    params: {
+                        date: this.date,
+                    }
+                });
+                console.log(response)
+                this.filteredData = response.data.data;
+                if (this.filteredData.length === 0) {
+                    this.$hMessage.info("没有找到符合条件的数据");
+                }
+
+            } catch (error) {
+                console.error('数据加载失败:', error);
+                this.$hMessage.error("数据加载失败，请重试");
+            } finally {
                 this.loading = false;
-            }, 2000);
+            }
         },
         handlePageChange(page) {
             this.currentPage = page;
         },
         exportData() {
             if (this.filteredData.length && this.fileFormat) {
-                const fileName = `transaction_data_${this.dateRangeOutput[0]}_to_${this.dateRangeOutput[1]}.${this.fileFormat === 'csv' ? 'csv' : 'xlsx'}`;
+                const fileName = `transaction_data_${this.date}.${this.fileFormat === 'csv' ? 'csv' : 'xlsx'}`;
 
                 if (this.fileFormat === 'csv') {
                     this.exportToCSV(fileName);
@@ -273,6 +172,7 @@ export default {
         },
     },
 };
+
 </script>
 
 <style scoped>

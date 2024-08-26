@@ -119,11 +119,6 @@ export default initRouter(
           component: SettlementDataOutput,
         },
         {
-          name: 'Settlement-SettlementLog',
-          path: 'Settlement/SettlementLog',
-          component: SettlementSettlementLog,
-        },
-        {
           name: 'Settlement-TransactionConfirm',
           path: 'Settlement/TransactionConfirm',
           component: SettlementTransactionConfirm,
@@ -235,11 +230,6 @@ function SettlementDailyInitiate() {
 function SettlementDataOutput() {
   return import(
     /* webpackChunkName: "Settlement-DataOutput" */ '@/views/Settlement/DataOutput.vue'
-  )
-}
-function SettlementSettlementLog() {
-  return import(
-    /* webpackChunkName: "Settlement-SettlementLog" */ '@/views/Settlement/SettlementLog.vue'
   )
 }
 function SettlementTransactionConfirm() {
