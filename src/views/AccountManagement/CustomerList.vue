@@ -10,12 +10,6 @@
                 <h-form-item label="用户姓名">
                     <h-input v-model="searchParams.customer_name" />
                 </h-form-item>
-                <h-form-item label="用户类型">
-                    <h-select v-model="searchParams.customer_type">
-                        <h-option label="个人" value="individual"></h-option>
-                        <h-option label="机构" value="organization"></h-option>
-                    </h-select>
-                </h-form-item>
                 <h-form-item label="手机号">
                     <h-input v-model="searchParams.customer_phone" />
                 </h-form-item>
@@ -41,13 +35,18 @@ export default {
             searchParams: {
                 customer_id: '',
                 customer_name: '',
-                customer_type: '',
                 customer_phone: '',
             },
             columns: [
                 { title: "用户ID", key: "customer_id" },
                 { title: "用户姓名", key: "customer_name" },
-                { title: "用户类型", key: "customer_type" },
+                { 
+                    title: "用户类型", 
+                    key: "customer_type",
+                    render: (h, params) => {
+                        return h('span', params.row.customer_type);
+                    }
+                },
                 { title: "手机号", key: "customer_phone" },
                 {
                     title: "操作",
@@ -94,6 +93,7 @@ export default {
                 },
             ],
             customers: [],
+            filteredCustomers: [],
             pageSize: 9,
             currentPage: 1,
         };
@@ -102,117 +102,49 @@ export default {
         this.loadCustomers();
     },
     methods: {
-        loadCustomers() {
-            this.customers = [
-                {
-                    customer_id: "C001",
-                    customer_name: "张三",
-                    customer_type: "个人",
-                    customer_phone: "13800000001",
-                },
-                {
-                    customer_id: "C002",
-                    customer_name: "李四",
-                    customer_type: "机构",
-                    customer_phone: "13800000002",
-                },
-                {
-                    customer_id: "C003",
-                    customer_name: "王五",
-                    customer_type: "个人",
-                    customer_phone: "13800000003",
-                },
-                {
-                    customer_id: "C004",
-                    customer_name: "赵六",
-                    customer_type: "机构",
-                    customer_phone: "13800000004",
-                },
-                {
-                    customer_id: "C001",
-                    customer_name: "张三",
-                    customer_type: "个人",
-                    customer_phone: "13800000001",
-                },
-                {
-                    customer_id: "C002",
-                    customer_name: "李四",
-                    customer_type: "机构",
-                    customer_phone: "13800000002",
-                },
-                {
-                    customer_id: "C003",
-                    customer_name: "王五",
-                    customer_type: "个人",
-                    customer_phone: "13800000003",
-                },
-                {
-                    customer_id: "C004",
-                    customer_name: "赵六",
-                    customer_type: "机构",
-                    customer_phone: "13800000004",
-                },
-                {
-                    customer_id: "C001",
-                    customer_name: "张三",
-                    customer_type: "个人",
-                    customer_phone: "13800000001",
-                },
-                {
-                    customer_id: "C002",
-                    customer_name: "李四",
-                    customer_type: "机构",
-                    customer_phone: "13800000002",
-                },
-                {
-                    customer_id: "C003",
-                    customer_name: "王五",
-                    customer_type: "个人",
-                    customer_phone: "13800000003",
-                },
-                {
-                    customer_id: "C004",
-                    customer_name: "赵六",
-                    customer_type: "机构",
-                    customer_phone: "13800000004",
-                },
-                {
-                    customer_id: "C001",
-                    customer_name: "张三",
-                    customer_type: "个人",
-                    customer_phone: "13800000001",
-                },
-                {
-                    customer_id: "C002",
-                    customer_name: "李四",
-                    customer_type: "机构",
-                    customer_phone: "13800000002",
-                },
-                {
-                    customer_id: "C003",
-                    customer_name: "王五",
-                    customer_type: "个人",
-                    customer_phone: "13800000003",
-                },
-                {
-                    customer_id: "C004",
-                    customer_name: "赵六",
-                    customer_type: "机构",
-                    customer_phone: "13800000004",
-                },
-            ];
+        async loadCustomers() {
+            try {
+                const res = await this.$request.get('/customer/customerinfo', {
+                    params: {
+                        customer_id: this.searchParams.customer_id,
+                        customer_name: this.searchParams.customer_name,
+                        customer_phone: this.searchParams.customer_phone,
+                    }
+                });
+                if (res.data.code === 200) {
+                    this.customers = res.data.data.map(item => ({
+                        customer_id: item.customerId,
+                        customer_name: item.customerName,
+                        customer_type: item.customerType === 0 ? '个人' : '机构',
+                        customer_phone: item.customerPhone,
+                    }));
+                    this.filteredCustomers = this.customers;
+                } else {
+                    this.$hMessage.error(res.data.message || '加载用户数据失败');
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                this.$hMessage.error('加载用户数据时发生错误');
+            }
         },
         onSearch() {
-            // 实现查询逻辑
-            console.log("查询参数:", this.searchParams);
+            this.filteredCustomers = this.customers.filter(customer => {
+                return (
+                    (!this.searchParams.customer_id || String(customer.customer_id).includes(this.searchParams.customer_id)) &&
+                    (!this.searchParams.customer_name || customer.customer_name.includes(this.searchParams.customer_name)) &&
+                    (!this.searchParams.customer_phone || customer.customer_phone.includes(this.searchParams.customer_phone))
+                );
+            });
+            this.currentPage = 1; // 查询后从第一页开始显示
         },
+
         onReset() {
             this.searchParams = {
                 customer_id: '',
                 customer_name: '',
-                customer_type: '',
                 customer_phone: '',
             };
+            this.filteredCustomers = this.customers; // 重置时显示所有数据
         },
         viewDetails(customer) {
             // 实现查看详细信息逻辑
@@ -241,6 +173,9 @@ export default {
             this.currentPage = page;
         },
     },
+    mounted() {
+        this.filteredCustomers = this.customers; 
+    },
     computed: {
         total() {
             return this.customers.length;
@@ -248,11 +183,12 @@ export default {
         currentData() {
             const start = (this.currentPage - 1) * this.pageSize;
             const end = this.currentPage * this.pageSize;
-            return this.customers.slice(start, end);
+            return this.filteredCustomers.slice(start, end);
         },
     }
 };
 </script>
+
 
 <style scoped>
 h3 {
@@ -276,3 +212,4 @@ h3 {
     margin-top: -60px;  
 }
 </style>
+
