@@ -28,7 +28,7 @@
             </h-form-item>
             <h-form-item label="风险等级" class="compact-form-item">
               <h-select v-model="editableFund.fund_risk_level" :disabled="!isEditing">
-                <h-option v-for="(level, index) in riskLevels" :key="index" :value="level">{{ level }}</h-option>
+                <h-option v-for="(label, value) in riskLevels" :key="value" :value="label">{{ label }}</h-option>
               </h-select>
             </h-form-item>
             <h-form-item label="基金经理姓名" class="compact-form-item">
@@ -36,7 +36,7 @@
             </h-form-item>
             <h-form-item label="产品状态" class="compact-form-item">
               <h-select v-model="editableFund.fund_state" :disabled="!isEditing">
-                <h-option v-for="(status, index) in fundStates" :key="index" :value="status">{{ status }}</h-option>
+                <h-option v-for="(label, value) in fundStates" :key="value" :value="label">{{ label }}</h-option>
               </h-select>
             </h-form-item>
           </h-form>
@@ -68,28 +68,62 @@ export default {
   data() {
     return {
       isEditing: false,
-      riskLevels: ['低风险', '中低风险', '中风险', '中高风险', '高风险'],
-      fundStates: ['正常', '暂停', '已关闭'],
-      originalFund: {
-        fund_id: '001',
-        fund_name: '稳健成长基金',
-        fund_type: '股票型',
-        fund_nav: '1.2345',
-        fund_est_date: '2021-06-30',
-        fund_risk_level: '中风险',
-        fund_manager_name: '张三',
-        fund_state: '正常',
+      riskLevels: {
+        0: '低风险',
+        1: '中低风险',
+        2: '中风险',
+        3: '中高风险',
+        4: '高风险',
       },
+      fundStates: {
+        0: '正常',
+        1: '暂停',
+        2: '已关闭',
+      },
+      originalFund: {},
       editableFund: {},
     };
   },
+  created() {
+    this.loadFundDetails();
+  },
   mounted() {
-    this.initializeData();
     this.initChart();
   },
   methods: {
-    initializeData() {
-      this.editableFund = { ...this.originalFund };
+    async loadFundDetails() {
+      try {
+        const fundId = Number(this.$route.query.fund_id);
+
+        // 使用 this.$request.get 发送请求
+        const res = await this.$request.get('/fund/fullinfo', {
+          params: {
+            id: fundId,
+          },
+        });
+        console.log(fundId);
+        console.log(res);
+        // 检查返回的状态码
+        if (res.data.code === 200) {
+          // 将返回的数据映射到 originalFund 对象中
+          this.originalFund = {
+            fund_id: res.data.data.fundId,
+            fund_name: res.data.data.fundName,
+            fund_type: res.data.data.fundType,
+            fund_nav: res.data.data.fundNav,
+            fund_est_date: res.data.data.fundEstDate,
+            fund_risk_level: this.riskLevels[res.data.data.fundRiskLevel],
+            fund_manager_name: res.data.data.fundManagerName,
+            fund_state: this.fundStates[res.data.data.fundState],
+          };
+          this.editableFund = { ...this.originalFund };
+        } else {
+          this.$hMessage.error(res.data.message || '加载基金详情失败');
+        }
+      } catch (error) {
+        console.error('加载基金详情时发生错误:', error);
+        this.$hMessage.error('加载基金详情时发生错误');
+      }
     },
     initChart() {
       const chartDom = document.getElementById('echarts-main');
@@ -159,13 +193,42 @@ export default {
       this.isEditing = true;
     },
     saveFundDetails() {
-      // 这里可以调用API保存数据
-      console.log('保存产品信息:', this.editableFund);
-      this.originalFund = { ...this.editableFund };
-      this.isEditing = false;
+      // 将基金风险等级和产品状态从中文映射回 int 类型
+      const fundRiskLevelKey = Object.keys(this.riskLevels).find(key => this.riskLevels[key] === this.editableFund.fund_risk_level);
+      const fundStateKey = Object.keys(this.fundStates).find(key => this.fundStates[key] === this.editableFund.fund_state);
+
+      // 创建要提交的完整基金数据对象
+      const fundToSave = {
+        fundId: this.editableFund.fund_id,  // 确保传递基金ID
+        fundName: this.editableFund.fund_name,
+        fundType: this.editableFund.fund_type,
+        fundNav: this.editableFund.fund_nav,
+        fundEstDate: this.editableFund.fund_est_date,
+        fundRiskLevel: parseInt(fundRiskLevelKey),  // 转换为 int 类型
+        fundManagerName: this.editableFund.fund_manager_name,
+        fundState: parseInt(fundStateKey),          // 转换为 int 类型
+      };
+
+      // 调用后端接口保存数据
+      this.$request.post('/fund/update_fund', fundToSave)
+        .then(response => {
+          if (response.data.code === 200) {
+            this.$hMessage.success('基金信息保存成功');
+            this.originalFund = { ...this.editableFund }; // 更新原始数据
+            this.isEditing = false; // 退出编辑模式
+          } else {
+            this.$hMessage.error(response.data.message || '保存基金信息失败');
+          }
+        })
+        .catch(error => {
+          console.error('保存基金信息时发生错误:', error);
+          this.$hMessage.error('保存基金信息时发生错误');
+        });
     },
+
+
     cancelEditing() {
-      this.initializeData();
+      this.editableFund = { ...this.originalFund };
       this.isEditing = false;
     },
     goBack() {
