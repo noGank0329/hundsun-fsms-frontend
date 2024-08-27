@@ -203,19 +203,35 @@ export default {
                 title: "删除确认",
                 content: `<p>确定要删除产品 <b>${product.fund_name}</b> 吗？</p>`,
                 onOk: () => {
-                    this.deleteProduct(product);
+                this.deleteProduct(product);
                 },
                 onCancel: () => {
-                    this.$hMessage.info("取消删除");
+                this.$hMessage.info("已取消删除操作");
                 },
             });
         },
+
         deleteProduct(product) {
-            // 实现删除产品逻辑
-            this.products = this.products.filter(p => p.fund_id !== product.fund_id);
-            this.$hMessage.info(`产品 ${product.fund_name} 已删除`);
-            console.log("删除产品:", product.fund_id);
+            // 发送 DELETE 请求到后端
+            this.$request.delete('/fund/modify_fund', {
+                params: { id: product.fund_id }
+            })
+            .then(response => {
+                if (response.data.code === 200) {
+                this.$hMessage.success(`产品 ${product.fund_name} 已成功删除`);
+                // 从前端列表中移除已删除的产品
+                this.products = this.products.filter(p => p.fund_id !== product.fund_id);
+                this.filteredProducts = this.products; // 更新过滤后的产品列表
+                } else {
+                this.$hMessage.error(response.data.message || '删除产品失败');
+                }
+            })
+            .catch(error => {
+                console.error('删除产品时发生错误:', error);
+                this.$hMessage.error('删除产品时发生错误');
+            });
         },
+
         handlePageChange(page) {
             this.currentPage = page;
         },
