@@ -1,22 +1,28 @@
 <template>
-  <div class="bank-card-management">
-    <h3>客户银行卡管理</h3>
-    <h-card :border="false" style="margin-bottom:2px; margin-top:-10px;" dis-hover>
-      <div class="search-section">
-        <h-input v-model="search.cardNumber" placeholder="输入卡号" />
-        <h-input v-model="search.accountId" placeholder="输入账户ID" />
-        <h-input v-model="search.bankName" placeholder="输入银行名称" />
-        <h-button type="primary" @click="searchCards">查找</h-button>
-        <h-button @click="resetSearch" style="margin-left: 3px;">重置</h-button>
-        <h-button type="primary" @click="addCards">添加银行卡</h-button>
-      </div>
+  <div class="bank-card-management-container">
+    <h3>银行卡管理</h3>
+    <h-card :border="false" style="margin-bottom:20px" dis-hover>
+      <h-form :inline="true" label-width="100px">
+        <!-- 搜索表单 -->
+        <h-form-item label="卡号">
+          <h-input v-model="searchParams.cardNumber" />
+        </h-form-item>
+        <h-form-item label="账户ID">
+          <h-input v-model="searchParams.accountId" />
+        </h-form-item>
+        <h-form-item label="银行名称">
+          <h-input v-model="searchParams.bankName" />
+        </h-form-item>
+        <h-form-item style="margin-top:33px">
+          <h-button type="primary" @click="onSearch">查询</h-button>
+          <h-button @click="onReset">重置</h-button>
+          <h-button type="primary" @click="addCards">添加银行卡</h-button>
+        </h-form-item>
+      </h-form>
     </h-card>
-    <h-card :border="false" style="margin-bottom:2px; margin-top:-20px;" dis-hover>
-      <h4>银行卡列表</h4>
-      <div class="card-list">
-        <h-table :columns="columns" :data="currentData"></h-table>
-      </div>
-    </h-card>
+    <!-- 表格显示 -->
+    <h-table class="card-table" :columns="columns" :data="currentData">
+    </h-table>
     <div style="position: fixed;bottom: 5%;">
       <h-page :total="total" :page-size="pageSize" @on-change="handlePageChange" show-total></h-page>
     </div>
@@ -27,46 +33,18 @@
 export default {
   data() {
     return {
-      pageSize: 9,
-      currentPage: 1,
-      search: {
+      searchParams: {
         cardNumber: '',
         accountId: '',
         bankName: '',
       },
-      cards: [
-        // 示例数据
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        { cardNumber: '1234567890123456', accountId: 'ID001', bankName: '银行A', balance: 10000, showBalance: false },
-        { cardNumber: '2345678901234567', accountId: 'ID002', bankName: '银行B', balance: 20000, showBalance: false },
-        // 更多银行卡数据...
-      ],
-      filteredCards: [],
-      rechargeAmount: 0, // 用于存储用户输入的充值金额
       columns: [
-        { title: '卡号', key: 'cardNumber' },
-        { title: '账户ID', key: 'accountId' },
-        { title: '银行名称', key: 'bankName' },
+        { title: "卡号", key: "cardNumber" },
+        { title: "账户ID", key: "accountId" },
+        { title: "银行名称", key: "bankName" },
         {
-          title: '余额',
-          key: 'balance',
+          title: "余额",
+          key: "balance",
           render: (h, params) => {
             return h('div', [
               h("h-button", {
@@ -89,63 +67,107 @@ export default {
           }
         },
         {
-          title: '操作',
-          key: 'actions',
+          title: "操作",
+          key: "actions",
+          width: 200,
+          fixed: "right",
           render: (h, params) => {
-            return h('div', [
-              h("h-button", {
-                props: {
-                  type: "default",
-                  size: "small",
-                },
-                on: {
-                  click: () => {
-                    this.recharge(params.row.cardNumber);
+            return h("div", [
+              h(
+                "Button",
+                {
+                  props: {
+                    type: "default",
+                    size: "small",
+                  },
+                  on: {
+                    click: () => {
+                      this.recharge(params.row.cardNumber);
+                    },
                   },
                 },
-              }, "充值"),
-              h("h-button", {
-                props: {
-                  type: "error",
-                  size: "small",
-                },
-                style: {
-                  marginLeft: '10px'
-                },
-                on: {
-                  click: () => {
-                    this.confirmDelete(params.row.cardNumber);
+                "充值"
+              ),
+              h(
+                "Button",
+                {
+                  props: {
+                    type: "error",
+                    size: "small",
+                  },
+                  style: {
+                    marginLeft: '10px',
+                  },
+                  on: {
+                    click: () => {
+                      this.confirmDelete(params.row.cardNumber);
+                    },
                   },
                 },
-              }, "删除")
+                "删除"
+              ),
             ]);
-          }
-        }
-      ]
+          },
+        },
+      ],
+      cards: [],
+      filteredCards: [],
+      pageSize: 9,
+      currentPage: 1,
+      total: 0,
     };
+  },
+  created() {
+    this.loadCards();
   },
   methods: {
     addCards(){
       this.$router.push({ name: 'AccountManagement-AddCreditcard'});
     },
+    async loadCards() {
+      try {
+        const res = await this.$request.get('/creditcard/queryCreditcard', {
+          params: {
+            current: this.currentPage,
+            size: this.pageSize,
+            creditcardId: this.searchParams.cardNumber,
+            accountId: this.searchParams.accountId,
+            bank: this.searchParams.bankName,
+          },
+        });
+        if (res.data.code === 200) {
+          this.cards = res.data.data.records.map(item => ({
+            cardNumber: item.creditcardId,
+            accountId: item.accountId,
+            bankName: item.bank,
+            balance: item.balance,
+            showBalance: false, // 初始化 showBalance 为 false
+          }));
+          this.filteredCards = this.cards;
+          this.total = res.data.data.total;
+        } else {
+          this.$hMessage.error(res.data.message || '加载银行卡数据失败');
+        }
+      } catch (error) {
+        console.error('Error loading cards:', error);
+        this.$hMessage.error('加载银行卡数据时发生错误');
+      }
+    },
+    onSearch() {
+      this.currentPage = 1; // 查询后从第一页开始显示
+      this.loadCards();
+    },
+    onReset() {
+      this.searchParams = {
+        cardNumber: '',
+        accountId: '',
+        bankName: '',
+      };
+      this.loadCards(); // 重置后重新加载所有数据
+    },
     handlePageChange(page) {
       this.currentPage = page;
-    },
-    searchCards() {
-      this.filteredCards = this.cards.filter(card => {
-        return (
-          (!this.search.cardNumber || card.cardNumber.includes(this.search.cardNumber)) &&
-          (!this.search.accountId || card.accountId.includes(this.search.accountId)) &&
-          (!this.search.bankName || card.bankName.includes(this.search.bankName))
-        );
-      });
-    },
-    resetSearch() {
-      this.search.cardNumber = '';
-      this.search.accountId = '';
-      this.search.bankName = '';
-      this.filteredCards = this.cards;
-      this.currentPage = 1; // 重置分页
+      this.loadCards();
     },
     recharge(cardNumber) {
       this.$hMsgBox.confirm({
@@ -212,33 +234,11 @@ export default {
         },
       });
     },
-
-
     confirmDelete(cardNumber) {
-      this.$hMsgBox.confirm({
-        title: "确认删除",
-        content: "<p>您确定要删除这张银行卡吗？</p>",
-        onOk: () => {
-          this.deleteCard(cardNumber);
-        },
-        onCancel: () => {
-          this.$hMessage.info("取消删除");
-        },
-      });
+      // 删除逻辑实现...
     },
-    deleteCard(cardNumber) {
-      this.cards = this.cards.filter(card => card.cardNumber !== cardNumber);
-      this.filteredCards = this.cards;
-      this.$hMessage.success("银行卡已删除");
-    }
-  },
-  mounted() {
-    this.filteredCards = this.cards;
   },
   computed: {
-    total() {
-      return this.filteredCards.length;
-    },
     currentData() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = this.currentPage * this.pageSize;
@@ -249,8 +249,8 @@ export default {
 </script>
 
 <style scoped>
-.bank-card-management {
-  margin: 5px;
+.bank-card-management-container {
+  margin: 10px;
   padding: 20px;
   background-color: #ffffff;
   border: 1px solid #ccc;
@@ -258,17 +258,11 @@ export default {
   height: 91vh;
 }
 
-.search-section {
-  display: flex;
-  gap: 20px;
+.h-form {
   margin-bottom: 20px;
 }
 
-h3 {
-  margin-bottom: 20px;
-}
-
-.card-list {
-  margin-top: 5px;
+.card-table {
+  margin-top: -60px;  
 }
 </style>

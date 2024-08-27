@@ -316,10 +316,27 @@ export default {
         },
       });
     },
-    deleteAccount(account) {
-      this.customerAccounts = this.customerAccounts.filter(a => a.account_id !== account.account_id);
-      this.$hMessage.info(`账户 ${account.account_id} 已删除`);
-      console.log("删除账户:", account.account_id);
+    async deleteAccount(account) {
+      try {
+        // 调用后端接口删除账户
+        const res = await this.$request.delete('/account/delete', {
+          params: {
+            id: account.account_id
+          }
+        });
+        if (res.data.code === 200) {
+          // 如果删除成功，从前端的账户列表中移除该账户
+          this.customerAccounts = this.customerAccounts.filter(a => a.account_id !== account.account_id);
+          this.$hMessage.success(`账户 ${account.account_id} 已成功删除`);
+          console.log("删除账户:", account.account_id);
+        } else {
+          // 如果删除失败，显示错误信息
+          this.$hMessage.error(res.data.message || '删除账户失败');
+        }
+      } catch (error) {
+        console.error('删除账户时发生错误:', error);
+        this.$hMessage.error('删除账户时发生错误');
+      }
     },
     async viewBankCards(account) {
       try {

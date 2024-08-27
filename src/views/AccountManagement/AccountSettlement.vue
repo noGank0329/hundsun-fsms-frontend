@@ -58,7 +58,7 @@
             </h-row>
             <h-row :gutter="16">
               <h-col :span="12">
-                <h-form-item label="身份证号码" prop="idNumber"
+                <h-form-item label="身份证号码(8位)" prop="idNumber"
                   :rules="[{ required: true, message: '请输入正确的身份证号码', validator: validateIdNumber, trigger: 'blur' }]">
                   <h-input v-model="form.idNumber" type="text" placeholder="请输入身份证号码" />
                 </h-form-item>
@@ -222,9 +222,9 @@ export default {
         riskTolerance: '',
         liquidityNeeds: '',
         marketReaction: '',
-        accountId: null, // 用于存储生成的 accountId
       },
       riskLevel: '',
+      accountId: '', // 用于存储生成的 accountId
       isAccountCreated: false, // 标记账户是否已经创建
     };
   },
@@ -241,9 +241,9 @@ export default {
       }
     },
     validateIdNumber(rule, value, callback) {
-      const regex = /^[a-zA-Z0-9]{18}$/;
+      const regex = /^[a-zA-Z0-9]{8}$/;
       if (!regex.test(value)) {
-        callback(new Error('身份证号码格式不正确，应为18位字母或数字'));
+        callback(new Error('身份证号码格式不正确，应为8位字母或数字'));
       } else {
         callback();
       }
@@ -251,16 +251,15 @@ export default {
     submitBasicInfo() {
       this.$refs.form.validate((valid) => {
         if (valid) {
-          // 此处模拟调用后台API，为用户创建账户
-          this.createAccount().then(accountId => {
-            // 保存返回的 accountId
-            this.formData.accountId = accountId;
-            this.isAccountCreated = true;
-            this.$hMessage.success("基本信息已保存，成功创建账户");
-            this.nextStep();
-          }).catch(error => {
-            this.$hMessage.error("创建账户失败，请重试");
-            console.error(error);
+          this.$hMsgBox.confirm({
+            title: "确认信息",
+            content: "<p>你确定要提交基本信息吗？</p>",
+            onOk: () => {
+              this.createAccount();
+            },
+            onCancel: () => {
+              this.$hMessage.info("已取消提交");
+            },
           });
         } else {
           this.$hMessage.warning('请完整填写所有必填信息');
@@ -268,15 +267,84 @@ export default {
       });
     },
     createAccount() {
-      // 假设这里有一个 API 调用，用来创建账户并返回 accountId
-      return new Promise((resolve, reject) => {
-        // 模拟API调用
-        setTimeout(() => {
-          const mockAccountId = '123456'; // 模拟返回的账户ID
-          resolve(mockAccountId);
-        }, 1000);
+      // 进行类型映射
+      const userTypeMapping = {
+        '个人': 0,
+        '机构': 1,
+      };
+
+      const idTypeMapping = {
+        '身份证': 0,
+        '护照': 1,
+        '港澳台居民居住证/通行证': 2,
+      };
+
+      // 默认设置 RiskId
+      const defaultRiskId = 2;  // 设定为 "平衡型" 的默认值
+
+      // 打印调试信息，确保表单数据正确
+      console.log('Form Data:', this.form);
+
+      const createAccountVo = {
+        customerName: this.form.userName,
+        customerType: userTypeMapping[this.form.userType],  // 映射到整数
+        customerPhone: this.form.phone,
+        customerIdCardType: idTypeMapping[this.form.idType],  // 映射到整数
+        customerIdCard: this.form.idNumber,
+        riskId: defaultRiskId,  // 设置默认的 RiskId
+      };
+
+      // 打印请求前的数据结构
+      console.log('Create Account VO:', createAccountVo);
+
+      this.$request.post('/user/create_account', createAccountVo)
+        .then(response => {
+          console.log('Response:', response); // 调试日志，查看响应
+          if (response.data.code === 200) {
+            this.$hMessage.info('账户创建成功');
+              // 添加延迟
+              setTimeout(() => {
+                this.fetchAccountId(createAccountVo.customerIdCard); // 使用身份证号码查询 accountId
+              }, 3000); // 3秒延迟
+            this.isAccountCreated = true,
+            this.nextStep();
+          } else {
+            this.$hMessage.error(response.data.message || '账户创建失败');
+          }
+        })
+        .catch(error => {
+          console.error('Create account failed', error);
+          this.$hMessage.error('账户创建失败');
+        });
+    },
+
+    fetchAccountId(customerIdCard) {
+      console.log('Querying account with customerIdCard:', customerIdCard); // 打印出传递的参数，确认是否正确
+      this.$request.get('/creditcard/queryAccountByID', {
+        params: {
+          id: customerIdCard, // 使用身份证号码查询账户
+        }
+      })
+      .then(response => {
+        console.log('Response from /queryAccountByID:', response); // 打印完整的响应，帮助调试
+        if (response.data.code === 200) {
+          const accounts = response.data.data;
+          if (accounts && accounts.length > 0) {
+            this.accountId = accounts[0].accountId; // 获取第一个账户的 accountId
+            this.$hMessage.info('获取 accountId 成功');
+          } else {
+            this.$hMessage.error('未找到关联的账户');
+          }
+        } else {
+          this.$hMessage.error(response.data.message || '获取 accountId 失败');
+        }
+      })
+      .catch(error => {
+        console.error('Fetch accountId failed', error); // 打印错误信息
+        this.$hMessage.error('获取 accountId 失败');
       });
     },
+
     validateCardNumber() {
       const regex = /^[0-9]{16}$/;
       if (!regex.test(this.bankForm.creditcard_id)) {
@@ -318,14 +386,38 @@ export default {
       });
     },
     addBankCard() {
-      // 假设这里有一个 API 调用，用来将银行卡信息与 accountId 关联
-      return new Promise((resolve, reject) => {
-        // 模拟API调用
-        setTimeout(() => {
-          console.log("关联的账户ID:", this.formData.accountId);
-          resolve();
-        }, 1000);
-      });
+      // 验证银行卡号、余额和密码
+      if (!this.validateCardNumber() || !this.validateBalance() || !this.validatePassword()) {
+        return;
+      }
+      if (!this.bankForm.creditcard_id || !this.bankForm.bank_name || !this.bankForm.balance || !this.bankForm.password) {
+        this.$hMessage.error("请填写所有字段");
+        return;
+      }
+      console.log(this.accountId);
+      // 构建 Creditcard 对象
+      const creditcard = {
+        creditcardId: this.bankForm.creditcard_id,  // 假设后端使用的是驼峰命名法
+        bank: this.bankForm.bank_name,
+        balance: this.bankForm.balance,
+        password: this.bankForm.password,
+        accountId: this.accountId // 将银行卡与账户关联
+      };
+
+      // 调用API更新或添加银行卡信息
+      this.$request.post('/creditcard/update', creditcard)
+        .then(response => {
+          if (response.data.code === 200) {
+            this.$hMessage.success("银行卡添加成功");
+            this.nextStep(); // 添加成功后进入下一步
+          } else {
+            this.$hMessage.error(response.data.message || "添加银行卡失败");
+          }
+        })
+        .catch(error => {
+          console.error('Update credit card failed', error);
+          this.$hMessage.error("添加银行卡失败，请重试");
+        });
     },
     goBack() {
       if (this.isAccountCreated) {
@@ -378,22 +470,52 @@ export default {
         });
       }
     },
-    saveRiskLevel() {
-      // 假设这里有一个 API 调用，用来将风险等级与 accountId 关联
-      return new Promise((resolve, reject) => {
-        // 模拟API调用
-        setTimeout(() => {
-          console.log("保存的风险等级:", this.riskLevel);
-          console.log("关联的账户ID:", this.formData.accountId);
-          resolve();
-        }, 1000);
-      });
-    }
+    async saveRiskLevel() {
+            try {
+                let riskLevelInt;
+
+                // 将风险等级转换为相应的整数
+                switch (this.riskLevel) {
+                    case '谨慎型':
+                        riskLevelInt = 0;
+                        break;
+                    case '稳健型':
+                        riskLevelInt = 1;
+                        break;
+                    case '平衡型':
+                        riskLevelInt = 2;
+                        break;
+                    case '进取型':
+                        riskLevelInt = 3;
+                        break;
+                    case '激进型':
+                        riskLevelInt = 4;
+                        break;
+                    default:
+                        riskLevelInt = 2; // 默认使用平衡型
+                }
+
+                // 通过已有的更新接口将账户信息发送到后端
+                const response = await this.$request.post('/account/update_account', {
+                    accountId: this.accountId,
+                    accountRiskLevel: riskLevelInt
+                });
+
+                if (response.data.code === 200) {
+                    this.$hMessage.success('风险等级已保存');
+                } else {
+                    this.$hMessage.error('保存风险等级失败');
+                }
+            } catch (error) {
+                console.error('保存风险等级时发生错误:', error);
+                this.$hMessage.error('保存风险等级时发生错误');
+            }
+        }
   },
   beforeRouteLeave(to, from, next) {
     if (this.isAccountCreated && this.current < 3) {
       this.$hMessage.warning('您正在开户过程中，离开可能导致数据丢失。');
-      const answer = window.confirm('确定要离开吗？未完成的开户流程将会丢失。');
+      const answer = window.confirm('确定要离开吗？未完成的开户流程可能导致数据不准确。');
       if (answer) {
         next();
       } else {

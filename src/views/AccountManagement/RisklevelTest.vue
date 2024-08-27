@@ -131,7 +131,7 @@ export default {
                     this.riskLevel = '平衡型';
                 }
 
-                // 保存结果到后台（模拟API调用）
+                // 保存结果到后台
                 this.saveRiskLevel();
             }
         },
