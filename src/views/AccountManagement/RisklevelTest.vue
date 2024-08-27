@@ -135,15 +135,47 @@ export default {
                 this.saveRiskLevel();
             }
         },
-        saveRiskLevel() {
-            // 假设有一个API可以将结果保存到后台
-            // api.saveRiskLevel(this.formData.accountId, this.riskLevel).then(() => {
-            //     this.$hMessage.success('风险等级已保存');
-            // });
+        async saveRiskLevel() {
+            try {
+                const accountId = this.formData.accountId;
+                let riskLevelInt;
 
-            console.log("保存的风险等级:", this.riskLevel);
-            console.log("用户ID:", this.formData.accountId);
-            this.$hMessage.success('风险等级已保存');
+                // 将风险等级转换为相应的整数
+                switch (this.riskLevel) {
+                    case '谨慎型':
+                        riskLevelInt = 0;
+                        break;
+                    case '稳健型':
+                        riskLevelInt = 1;
+                        break;
+                    case '平衡型':
+                        riskLevelInt = 2;
+                        break;
+                    case '进取型':
+                        riskLevelInt = 3;
+                        break;
+                    case '激进型':
+                        riskLevelInt = 4;
+                        break;
+                    default:
+                        riskLevelInt = 2; // 默认使用平衡型
+                }
+
+                // 通过已有的更新接口将账户信息发送到后端
+                const response = await this.$request.post('/account/update_account', {
+                    accountId: accountId,
+                    accountRiskLevel: riskLevelInt
+                });
+
+                if (response.data.code === 200) {
+                    this.$hMessage.success('风险等级已保存');
+                } else {
+                    this.$hMessage.error('保存风险等级失败');
+                }
+            } catch (error) {
+                console.error('保存风险等级时发生错误:', error);
+                this.$hMessage.error('保存风险等级时发生错误');
+            }
         },
     },
 };

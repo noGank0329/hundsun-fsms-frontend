@@ -164,11 +164,29 @@ export default {
             });
         },
         deleteCustomer(customer) {
-            // 实现删除用户逻辑
-            this.customers = this.customers.filter(c => c.customer_id !== customer.customer_id);
-            this.$hMessage.info(`用户 ${customer.customer_name} 已删除`);
-            console.log("删除用户:", customer.customer_id);
+            // 调用后端删除接口
+            this.$request.delete('/customer/deleteCustomer', {
+                params: {
+                    customerId: customer.customer_id
+                }
+            })
+            .then(response => {
+                if (response.data.code === 200) {
+                    console.log(customer.customer_id);
+                    this.$hMessage.info(`用户 ${customer.customer_name} 已删除`);
+                    // 从前端数据中移除删除的用户
+                    this.customers = this.customers.filter(c => c.customer_id !== customer.customer_id);
+                    this.filteredCustomers = this.customers;
+                } else {
+                    this.$hMessage.error(response.data.message || '删除用户失败');
+                }
+            })
+            .catch(error => {
+                console.error('删除用户时发生错误:', error);
+                this.$hMessage.error('删除用户时发生错误');
+            });
         },
+
         handlePageChange(page) {
             this.currentPage = page;
         },
