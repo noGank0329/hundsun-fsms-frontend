@@ -1,23 +1,23 @@
 <template>
     <div class="customer-details-container">
       <h3>用户详细信息</h3>
-      <h-form :model="customer" label-width="120px">
+      <h-form :model="editableCustomer" label-width="120px">
         <h-row :gutter="16">
           <h-col :span="12">
             <h-form-item label="用户ID">
-              <h-input v-model="customer.customer_id" disabled />
+              <h-input v-model="editableCustomer.customer_id" disabled />
             </h-form-item>
           </h-col>
           <h-col :span="12">
             <h-form-item label="用户姓名">
-              <h-input v-model="customer.customer_name" :disabled="!isEditing" />
+              <h-input v-model="editableCustomer.customer_name" :disabled="!isEditing" />
             </h-form-item>
           </h-col>
         </h-row>
         <h-row :gutter="16">
           <h-col :span="12">
             <h-form-item label="用户类型">
-              <h-select v-model="customer.customer_type" :disabled="!isEditing">
+              <h-select v-model="editableCustomer.customer_type" :disabled="!isEditing">
                 <h-option label="个人" value= '0'></h-option>
                 <h-option label="机构" value= '1'></h-option>
               </h-select>
@@ -25,19 +25,19 @@
           </h-col>
           <h-col :span="12">
             <h-form-item label="手机号">
-              <h-input v-model="customer.customer_phone" :disabled="!isEditing" />
+              <h-input v-model="editableCustomer.customer_phone" :disabled="!isEditing" />
             </h-form-item>
           </h-col>
         </h-row>
         <h-row :gutter="16">
           <h-col :span="12">
             <h-form-item label="身份证号">
-              <h-input v-model="customer.customer_idcard" :disabled="!isEditing" />
+              <h-input v-model="editableCustomer.customer_idcard" :disabled="!isEditing" />
             </h-form-item>
           </h-col>
           <h-col :span="12">
             <h-form-item label="身份证类型">
-              <h-select v-model="customer.customer_idtype" :disabled="!isEditing">
+              <h-select v-model="editableCustomer.customer_idtype" :disabled="!isEditing">
                 <h-option label="身份证" value= '0'></h-option>
                 <h-option label="护照" value= '1'></h-option>
                 <h-option label="港澳台居民居住证/通行证" value= '2'></h-option>
@@ -95,6 +95,14 @@ export default {
         customer_idtype: '',
         customer_phone: '',
       },
+      accountRiskLevelMap: {
+        0: "谨慎型",
+        1: "稳健型",
+        2: "平衡型",
+        3: "进取型",
+        4: "激进型"
+      },
+      editableCustomer: {},  // 用于存储编辑时的用户信息
       customerAccounts: [], // 存储用户的账户信息
       currentBankCards: [], // 存储当前账户的银行卡信息
       showBankCardsDialog: false, // 控制银行卡对话框显示与否
@@ -176,10 +184,12 @@ export default {
   },
   created() {
     this.loadCustomerDetails();
+    this.loadCustomerAccounts(); // 加载用户账户信息
   },
   methods: {
     handlePageChange(page) {
       this.currentPage = page;
+      this.loadCustomerAccounts(); // 页码改变时重新加载账户信息
     },
     async loadCustomerDetails() {
         try {
@@ -204,6 +214,7 @@ export default {
                     customer_idtype: String(res.data.data.customerIdcardType),
                     customer_phone: res.data.data.customerPhone,
                 };
+                this.editableCustomer = { ...this.customer }; // 将原始数据复制到可编辑对象
             } else {
                 // 如果请求失败，显示错误信息
                 this.$hMessage.error(res.data.message || '加载用户详细信息失败');
@@ -215,17 +226,78 @@ export default {
         }
     },
 
+    async loadCustomerAccounts() {
+      try {
+        const customerId = this.$route.query.customer_id;
+        const res = await this.$request.get('/user/queryAccountByCustomerId', {
+          params: {
+            current: this.currentPage,
+            size: this.pageSize,
+            customerId: customerId
+          }
+        });
+
+        if (res.data.code === 200) {
+          // 使用 map 方法将后端返回的数据字段名映射到前端表格需要的字段名
+          this.customerAccounts = res.data.data.records.map(account => {
+            return {
+              account_id: account.accountId, // 将 accountId 映射到 account_id
+              status: account.status,        // 直接使用 status
+              create_date: account.createDate, // 将 createDate 映射到 create_date
+              account_risk_level: this.accountRiskLevelMap[account.accountRiskLevel], // 将 accountRiskLevel 映射到 account_risk_level
+            };
+          });
+          this.total = res.data.data.total; // 设置总账户数
+        } else {
+          this.$hMessage.error(res.data.message || '加载账户信息失败');
+        }
+      } catch (error) {
+        console.error('加载账户信息时发生错误:', error);
+        this.$hMessage.error('加载账户信息时发生错误');
+      }
+    },
+
+
     enableEditing() {
       this.isEditing = true;
+      this.editableCustomer = { ...this.customer }; // 进入编辑模式时，复制原始数据到可编辑对象
     },
     saveCustomer() {
-      console.log('保存用户信息:', this.customer);
-      this.$hMessage.success('用户信息已保存');
-      this.isEditing = false;
-      this.$router.push({ name: 'AccountManagement-CustomerDetails', query: { customer_id: this.customer.customer_id } });
+      console.log('保存用户信息:', this.editableCustomer);
+
+      // 创建要提交的完整用户数据对象
+      const customerToSave = {
+        customerId: this.editableCustomer.customer_id,
+        customerName: this.editableCustomer.customer_name,
+        customerType: parseInt(this.editableCustomer.customer_type),  // 用户类型转换为 int
+        customerIdcard: this.editableCustomer.customer_idcard,
+        customerIdcardType: parseInt(this.editableCustomer.customer_idtype),  // 身份证类型转换为 int
+        customerPhone: this.editableCustomer.customer_phone,
+      };
+
+      console.log('提交到后端的用户信息:', customerToSave);
+
+      // 调用后端接口保存数据
+      this.$request.post('/customer/update_customer', customerToSave)
+        .then(response => {
+          console.log('后端响应:', response); // 打印后端响应
+          if (response.data.code === 200) {
+            this.$hMessage.success('用户信息保存成功');
+            this.customer = { ...this.editableCustomer }; // 保存成功后，将编辑内容覆盖原始数据
+            this.isEditing = false; // 退出编辑模式
+          } else {
+            this.$hMessage.error(response.data.message || '保存用户信息失败');
+          }
+        })
+        .catch(error => {
+          console.error('保存用户信息时发生错误:', error);
+          this.$hMessage.error('保存用户信息时发生错误');
+        });
     },
+
     cancelEdit() {
       this.isEditing = false;
+      this.editableCustomer = { ...this.customer };
       this.loadCustomerDetails(); // 取消编辑时重新加载数据，恢复原始状态
       this.$router.push({ name: 'AccountManagement-CustomerDetails', query: { customer_id: this.customer.customer_id } });
     },
@@ -249,25 +321,30 @@ export default {
       this.$hMessage.info(`账户 ${account.account_id} 已删除`);
       console.log("删除账户:", account.account_id);
     },
-    viewBankCards(account) {
-      // 模拟从服务器加载当前账户的银行卡信息
-      const bankCardsData = account.account_id === "A001"
-        ? [
-            {
-              creditcard_id: "CC001",
-              bank_name: "工商银行",
-              balance: "5000.00",
-            },
-            {
-              creditcard_id: "CC002",
-              bank_name: "建设银行",
-              balance: "3000.00",
-            },
-          ]
-        : []; // 如果是其他账户，这里模拟无银行卡
-
-      this.currentBankCards = bankCardsData;
-      this.showBankCardsDialog = true; // 显示对话框
+    async viewBankCards(account) {
+      try {
+        console.log("账户ID:", account.account_id);  // 添加调试信息
+        const res = await this.$request.get('/creditcard/queryAccountByID', {
+          params: {
+            accountId: account.account_id
+          }
+        });
+        console.log(res);
+        if (res.data.code === 200) {
+          console.log(res);
+          this.currentBankCards = res.data.data.map(card => ({
+            creditcard_id: card.creditcardId,
+            bank_name: card.bankName,
+            balance: card.balance,
+          }));
+          this.showBankCardsDialog = true; // 显示对话框
+        } else {
+          this.$hMessage.error(res.data.message || '加载银行卡信息失败');
+        }
+      } catch (error) {
+        console.error('加载银行卡信息时发生错误:', error);
+        this.$hMessage.error('加载银行卡信息时发生错误');
+      }
     },
     onBankCardDialogOk() {
       this.showBankCardsDialog = false; // 关闭对话框
