@@ -217,6 +217,7 @@ export default {
                     const mywithdrawOrderVo = {
                         transactionId: this.selectOrder.transactionId,
                         fundId: this.selectOrder.fundId,
+                        transactionAmount: this.selectOrder.transactionAmount
                     }
                     this.$request.post('/transaction/delete_purchase', mywithdrawOrderVo)
                         .then(res => {

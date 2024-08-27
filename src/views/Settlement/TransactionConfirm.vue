@@ -44,6 +44,7 @@
 export default {
     data() {
         return {
+            bankcardid: '',
             redemptionKey: 0,
             pageSize: 10,
             currentPage1: 1,
@@ -113,9 +114,38 @@ export default {
             this.loading = true;
             setTimeout(() => {
                 this.updateTransactionState(this.redemptionOrders)
+                this.redemptionOrders.forEach(order => {
+                    this.chargeCreditCard(order.accountId, order.transactionAmount);
+                });
                 this.redemptionConfirmed = true;
                 this.loading = false;
             }, 2000);
+        },
+        chargeCreditCard(myid, amount) {
+            const params = {
+                current: 1,
+                size: 1,
+                accountId: myid
+            }
+            this.$request.get('/creditcard/queryCreditcardById', {
+                params
+            }).then(response => {
+                const mycharge = {
+                    id: response.data.data.records[0].creditcardId,  // 确保这个值正确
+                    mount: amount  // 确保这个值正确
+                };
+
+                console.log(mycharge);
+
+                this.$request.post('/creditcard/Charge', null, { params: mycharge })
+                    .then(response => {
+                        console.log('Charge successful:', response.data);
+                    })
+                    .catch(error => {
+                        console.error('Error charging credit card:', error);
+                    });
+
+            })
         },
         handlePageChange1(page1) {
             this.currentPage1 = page1;
