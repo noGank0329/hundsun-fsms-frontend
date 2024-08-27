@@ -9,6 +9,7 @@
           <img alt="" :src="minilogo" style="width: 100%;">
         </div>
         <span class="title">理财销售交易系统</span>
+        <h-button type="primary" @click="logout">退出登录</h-button>
       </div>
       <h-row>
         <h-col :span=3>
@@ -77,7 +78,7 @@
 </template>
 
 <script>
-import minilogo from "@/assets/mini-logo.png"
+import minilogo from "@/assets/mini-logo.png";
 export default {
   data() {
     return {
@@ -136,9 +137,12 @@ export default {
       }
     },
     updateLayout() {
-      const noLayoutRoutes = ['index', 'Register']; // 不需要布局的路由名称
+      const noLayoutRoutes = ['index', 'Register'];
       const currentRouteName = this.$route.name;
       this.showLayout = !noLayoutRoutes.includes(currentRouteName);
+    },
+    logout() {
+      this.$router.push({ name: 'index' });
     }
   },
   mounted() {
@@ -147,7 +151,6 @@ export default {
       this.updateLayout();
     });
   },
-
 };
 </script>
 
@@ -172,5 +175,16 @@ export default {
   font-family: "黑体";
   font-size: 20px;
   user-select: none;
+  margin-right: 1300px;
+}
+
+.logout-button {
+  background-color: #f5222d;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
 }
 </style>

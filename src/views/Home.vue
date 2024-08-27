@@ -142,13 +142,13 @@ export default {
                 arrow: "hover",
             },
             currentTime: new Date().toLocaleString(),
-            currentUser:'',
+            currentUser: '',
         };
     },
     mounted() {
         this.updateTime();
         setInterval(this.updateTime, 1000);
-        this.currentUser = localStorage.getItem('userName'); 
+        this.currentUser = localStorage.getItem('userName');
         console.log('当前登录的用户名:', this.currentUser);
     },
     methods: {

@@ -14,19 +14,9 @@ export default initRouter(
           component: Index,
         },
         {
-          name: 'AccountSettlement',
-          path: 'AccountSettlement',
-          component: AccountSettlement,
-        },
-        {
           name: 'Consult',
           path: 'Consult',
           component: Consult,
-        },
-        {
-          name: 'CreateAccount',
-          path: 'CreateAccount',
-          component: CreateAccount,
         },
         {
           name: 'Home',
@@ -137,18 +127,8 @@ export default initRouter(
 function Index() {
   return import(/* webpackChunkName: "index" */ '@/views/index.vue')
 }
-function AccountSettlement() {
-  return import(
-    /* webpackChunkName: "AccountSettlement" */ '@/views/AccountSettlement.vue'
-  )
-}
 function Consult() {
   return import(/* webpackChunkName: "Consult" */ '@/views/Consult.vue')
-}
-function CreateAccount() {
-  return import(
-    /* webpackChunkName: "CreateAccount" */ '@/views/CreateAccount.vue'
-  )
 }
 function Home() {
   return import(/* webpackChunkName: "Home" */ '@/views/Home.vue')
