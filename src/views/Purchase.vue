@@ -19,7 +19,8 @@
             <h-form-item class="query-form-item">
               <div class="form-item-content">
                 <span class="query-label">用户账号</span>
-                <h-input v-model="searchForm.accountNumber" class="query-input"></h-input>
+                <h-input v-model="searchForm.customer_id_card" type="text" class="query-input" placeholder="请输入客户账号">
+                </h-input>
               </div>
             </h-form-item>
           </h-col>
@@ -42,7 +43,7 @@
           <h-row :gutter="20">
             <h-col :span="24" :md="12">
               <h-form-item label="客户姓名">
-                <h-input v-model="customerInfo.name" :style="getDynamicStyle('name')" placeholder="——"
+                <h-input v-model="customerInfo.customerName" :style="getDynamicStyle('customer_name')" placeholder="——"
                   readonly></h-input>
               </h-form-item>
               <h-form-item label="客户邮箱">
@@ -50,21 +51,21 @@
                   readonly></h-input>
               </h-form-item>
               <h-form-item label="证件号码">
-                <h-input v-model="customerInfo.idNumber" :style="getDynamicStyle('idNumber')" placeholder="——"
-                  readonly></h-input>
+                <h-input v-model="customerInfo.customerIdcard" :style="getDynamicStyle('customer_idcard')"
+                  placeholder="——" readonly></h-input>
               </h-form-item>
             </h-col>
             <h-col :span="24" :md="12">
               <h-form-item label="客户电话">
-                <h-input v-model="customerInfo.phone" :style="getDynamicStyle('phone')" placeholder="——"
-                  readonly></h-input>
+                <h-input v-model="customerInfo.customerPhone" :style="getDynamicStyle('customer_phone')"
+                  placeholder="——" readonly></h-input>
               </h-form-item>
               <h-form-item label="证件类型">
-                <h-input v-model="customerInfo.idType" :style="getDynamicStyle('idType')" placeholder="——"
+                <h-input v-model="idcardTypeText" :style="getDynamicStyle('customer_idcard_type')" placeholder="——"
                   readonly></h-input>
               </h-form-item>
               <h-form-item label="客户类别">
-                <h-input v-model="customerInfo.category" :style="getDynamicStyle('category')" placeholder="——"
+                <h-input v-model="customerTypeText" :style="getDynamicStyle('customer_type')" placeholder="——"
                   readonly></h-input>
               </h-form-item>
             </h-col>
@@ -78,8 +79,8 @@
                 </h-col>
                 <h-col :span="12">
                   <h-form-item label="客户账号">
-                    <h-input v-model="customerInfo.accountNumber" :style="getDynamicStyle('accountNumber')"
-                      placeholder="——" readonly></h-input>
+                    <h-input v-model="customerInfo.customerId" :style="getDynamicStyle('customerId')" placeholder="——"
+                      readonly></h-input>
                   </h-form-item>
                 </h-col>
               </h-row>
@@ -88,7 +89,6 @@
         </h-form>
       </h-card>
     </transition>
-
     <!-- 下半部分：基金申购表单 -->
     <h-card class="purchase-card">
       <h-form :model="purchaseForm" class="purchase-form" @submit.prevent="submitForm">
@@ -108,7 +108,7 @@
             <h-form-item class="form-item-inline">
               <div class="form-item-content">
                 <span class="form-label">购买金额</span>
-                <h-input v-model="purchaseForm.amount" placeholder="请输入购买金额" type="number"
+                <h-input v-model="purchaseForm.amount" placeholder="请输入购买金额" type="text"
                   :class="{ 'input-error': errors.amount }"></h-input>
                 <p v-if="errors.amount" class="error-message">{{ errors.amount }}</p>
               </div>
@@ -147,7 +147,7 @@
             <h-form-item class="form-item-inline">
               <div class="form-item-content">
                 <span class="form-label">可用金额</span>
-                <h-input v-model="purchaseForm.availableAmount" placeholder="请输入可用金额" disabled></h-input>
+                <h-input v-model="purchaseForm.availableAmount" placeholder="可用金额" disabled></h-input>
               </div>
             </h-form-item>
           </h-col>
@@ -155,132 +155,223 @@
             <h-form-item class="form-item-inline">
               <div class="form-item-content">
                 <span class="form-label">用户账号</span>
-                <h-input v-model="purchaseForm.accountNumber" placeholder="请输入用户账号" disabled></h-input>
+                <h-input v-model="customerInfo.customerId" placeholder="请输入用户账号" disabled></h-input>
               </div>
             </h-form-item>
           </h-col>
         </h-row>
         <h-form-item class="submit-button">
           <h-button type="primary" @mousedown.native="handleMouseDown" @mouseup.native="handleMouseUp"
-            @click="submitForm" class="purchase-button">申购</h-button>
+            @click="submitPurchase" class="purchase-button">申购</h-button>
         </h-form-item>
       </h-form>
     </h-card>
+
+
+
   </div>
+
 </template>
 
 <script>
 export default {
+
   data() {
     return {
+      // 映射对象
+      customerTypeMap: {
+        0: '个人',
+        1: '机构'
+      },
+      idcardTypeMap: {
+        0: '身份证',
+        1: '护照',
+        2: '港澳台居民居住证/通行证'
+      },
       searchForm: {
         delegateType: '',
-        accountNumber: '',
+        customer_id_card: '', // 确保这里的键名和 v-model 使用的一致
+      },
+      searchParams: {
+        customer_id_card: '',
       },
       customerInfo: {
-        name: '',
-        email: '',
-        idNumber: '',
-        phone: '',
-        idType: '',
-        category: '',
+        customerId: '',         // 客户ID
+        customerName: '',       // 客户姓名
+        customerType: '',       // 客户类型
+        customerIdcard: '',     // 证件号码
+        customerIdcardType: '',// 证件类型
+        customerPhone: '',      // 客户电话
         riskLevel: '',
-        accountNumber: '',
+        email: ''
+        // 添加其他字段
       },
-      searchTriggered: false,
       purchaseForm: {
         fundCode: '',
         amount: '',
         bankCardNumber: '',
         currency: 'CNY',
-        availableAmount: '10000',
+        availableAmount: '',
         accountNumber: '',
       },
-
-      purchaseForm: {
-        fundCode: '',
-        amount: '',
-        bankCardNumber: '',
-        currency: '',
-        availableAmount: '10000',
-        accountNumber: '',
-      },
-      errors: {}
+      errors: {},
     };
   },
-  methods: {
-    created() {
-      console.log(this.searchForm);
+
+  computed: {
+    customerTypeText() {
+      return this.customerTypeMap[this.customerInfo.customerType] || '——';
     },
-    searchCustomer() {
-      // 模拟查询到的客户信息
-      this.customerInfo = {
-        name: '张三',
-        email: 'zhangsan@example.com',
-        idNumber: '444444444444',
-        phone: '13800138000',
-        idType: '身份证',
-        category: '普通客户',
-        riskLevel: '0',
-        accountNumber: '2022091600001',
+    idcardTypeText() {
+      return this.idcardTypeMap[this.customerInfo.customerIdcardType] || '——';
+    }
+  },
+
+  watch: {
+    customerInfo: {
+      deep: true,
+      immediate: true,
+      handler(newVal) {
+        if (newVal.customerId) {
+          this.purchaseForm.accountNumber = newVal.customerId;
+          console.log('Account Number set to:', this.purchaseForm.accountNumber);
+        } else {
+          console.log('Customer ID is missing.');
+        }
+      }
+    }
+  },
+
+  methods: {
+
+    submitPurchase() {
+      console.log('Purchase Form:', this.purchaseForm);
+      // 确保所有字段都存在并正确格式化
+      const formattedPurchase = {
+        accountId: this.purchaseForm.accountNumber,  // 账户ID
+        cardNumber: this.purchaseForm.bankCardNumber, // 银行卡号
+        fundId: this.purchaseForm.fundCode, // 基金代码
+        purchaseAmount: parseFloat(this.purchaseForm.amount) // 申购金额
       };
 
-      // 将客户账号填入申购表单
-      this.purchaseForm.accountNumber = this.customerInfo.accountNumber;
+      console.log('即将发送的数据:', formattedPurchase); // 打印所有字段以确认是否正确
 
-      // 设置搜索已触发
-      this.searchTriggered = true;
+      this.$request.post('/purchase/create', formattedPurchase)
+        .then(response => {
+          if (response.data.code === 200) {
+            this.$hMessage.info('申购成功');
+            // 你可以在这里进行页面跳转或其他操作
+          } else {
+            this.$hMessage.error(response.data.message || '申购失败');
+          }
+        })
+        .catch(error => {
+          console.error('申购失败', error);
+          this.$hMessage.error('申购失败');
+        });
     },
-    validateForm() {
-      this.errors = {};
 
-      // 基金代码验证
-      if (!this.purchaseForm.fundCode) {
-        this.errors.fundCode = '基金代码不能为空';
+
+    async searchCustomer() {
+      if (!this.searchForm.customer_id_card.trim()) {
+        this.showMessage('客户账号不能为空', 'error');
+        return;
       }
 
-      // 购买金额验证
-      if (!this.purchaseForm.amount) {
-        this.errors.amount = '购买金额不能为空';
-      } else if (isNaN(this.purchaseForm.amount) || this.purchaseForm.amount <= 0) {
-        this.errors.amount = '请输入有效的购买金额';
-      }
+      try {
+        const response = await this.$request.get('/customer/customerfullinfo', {
+          params: { id: this.searchForm.customer_id_card.trim() }
+        });
 
-      // 银行卡号验证
-      if (!this.purchaseForm.bankCardNumber) {
-        this.errors.bankCardNumber = '银行卡号不能为空';
-      }
+        console.log('API 返回的数据:', response);
 
-      // 支持币种验证
-      if (!this.purchaseForm.currency) {
-        this.errors.currency = '请选择币种';
+        // 确保 data 存在并且包含客户信息
+        if (response.data && response.data.data) {
+          this.customerInfo = {
+            customerId: response.data.data.customerId || '',
+            customerName: response.data.data.customerName || '',
+            customerType: response.data.data.customerType,
+            customerIdcard: response.data.data.customerIdcard || '',
+            customerIdcardType: response.data.data.customerIdcardType,
+            customerPhone: response.data.data.customerPhone || '',
+            riskLevel: '中低风险',
+            email: '243831jau@gmail.com'
+            // 添加其他字段
+          };
+          this.purchaseForm = {
+            availableAmount: '19700'
+          }
+          console.log('Updated customerInfo:', this.customerInfo);
+          this.showMessage('查询成功', 'success');
+        } else {
+          this.showMessage('未找到客户信息', 'warning');
+        }
+      } catch (error) {
+        console.error('查询失败:', error);
+        this.showMessage('查询失败: ' + error.message, 'error');
       }
+    }
+    ,
 
-      return Object.keys(this.errors).length === 0; // 如果没有错误，则返回 true
+    showMessage(message, type) {
+      console.log('显示消息:', message, type); // 调试信息
+      if (this.$hMessage) {
+        this.$hMessage[type]({
+          message: message || '默认消息',
+          type: type || 'info',
+        });
+      } else {
+        console.error('this.$hMessage 不是一个函数');
+      }
     },
+
+    handleMouseDown(event) {
+      event.target.style.backgroundColor = '#ccc'; // 按下时变灰
+    },
+
+    handleMouseUp(event) {
+      event.target.style.backgroundColor = ''; // 恢复原样
+    },
+
     submitForm() {
       if (this.validateForm()) {
-        // 申购基金逻辑
-        this.$hMessage.success('基金申购成功！');
-      } else {
-        this.$hMessage.error('请修正表单中的错误！');
+        console.log('表单数据:', this.purchaseForm);
+        // 提交表单逻辑
       }
     },
-    handleMouseDown(event) {
-      event.target.classList.add('clicked');
-    },
-    handleMouseUp(event) {
-      event.target.classList.remove('clicked');
-    },
-    purchaseFund() {
-      // 申购基金逻辑
-      this.$hMessage.success('基金申购成功！');
+
+    validatePurchaseForm() {
+      this.errors = {};
+      let isValid = true;
+
+      if (!this.purchaseForm.fundCode) {
+        this.errors.fundCode = '基金代码不能为空';
+        isValid = false;
+      }
+      if (!this.purchaseForm.amount) {
+        this.errors.amount = '购买金额不能为空';
+        isValid = false;
+      }
+      if (!this.purchaseForm.bankCardNumber) {
+        this.errors.bankCardNumber = '银行卡号不能为空';
+        isValid = false;
+      }
+      if (!this.purchaseForm.currency) {
+        this.errors.currency = '支持币种不能为空';
+        isValid = false;
+      }
+      if (!this.purchaseForm.accountNumber) {
+        this.errors.accountNumber = '用户账号不能为空';
+        isValid = false;
+      }
+      return isValid;
     },
 
     getDynamicStyle(field) {
-      return this.searchTriggered ? { color: 'red', fontWeight: 'bold' } : {};
+      return this.customerInfo[field] ? { 'info-filled': true } : { 'info-empty': true };
     },
   },
+
 };
 </script>
 

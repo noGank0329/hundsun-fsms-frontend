@@ -40,8 +40,8 @@ export default {
             columns: [
                 { title: "用户ID", key: "customer_id" },
                 { title: "用户姓名", key: "customer_name" },
-                { 
-                    title: "用户类型", 
+                {
+                    title: "用户类型",
                     key: "customer_type",
                     render: (h, params) => {
                         return h('span', params.row.customer_type);
@@ -70,24 +70,7 @@ export default {
                                 },
                                 "查看/编辑详细信息"
                             ),
-                            h(
-                                "Button",
-                                {
-                                    props: {
-                                        type: "error",
-                                        size: "small",
-                                    },
-                                    style: {
-                                        marginLeft: '10px',
-                                    },
-                                    on: {
-                                        click: () => {
-                                            this.confirmDelete(params.row);
-                                        },
-                                    },
-                                },
-                                "删除"
-                            ),
+
                         ]);
                     },
                 },
@@ -170,21 +153,21 @@ export default {
                     customerId: customer.customer_id
                 }
             })
-            .then(response => {
-                if (response.data.code === 200) {
-                    console.log(customer.customer_id);
-                    this.$hMessage.info(`用户 ${customer.customer_name} 已删除`);
-                    // 从前端数据中移除删除的用户
-                    this.customers = this.customers.filter(c => c.customer_id !== customer.customer_id);
-                    this.filteredCustomers = this.customers;
-                } else {
-                    this.$hMessage.error(response.data.message || '删除用户失败');
-                }
-            })
-            .catch(error => {
-                console.error('删除用户时发生错误:', error);
-                this.$hMessage.error('删除用户时发生错误');
-            });
+                .then(response => {
+                    if (response.data.code === 200) {
+                        console.log(customer.customer_id);
+                        this.$hMessage.info(`用户 ${customer.customer_name} 已删除`);
+                        // 从前端数据中移除删除的用户
+                        this.customers = this.customers.filter(c => c.customer_id !== customer.customer_id);
+                        this.filteredCustomers = this.customers;
+                    } else {
+                        this.$hMessage.error(response.data.message || '删除用户失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('删除用户时发生错误:', error);
+                    this.$hMessage.error('删除用户时发生错误');
+                });
         },
 
         handlePageChange(page) {
@@ -192,7 +175,7 @@ export default {
         },
     },
     mounted() {
-        this.filteredCustomers = this.customers; 
+        this.filteredCustomers = this.customers;
     },
     computed: {
         total() {
@@ -227,7 +210,6 @@ h3 {
 }
 
 .customer-table {
-    margin-top: -60px;  
+    margin-top: -60px;
 }
 </style>
-
